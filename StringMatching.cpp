@@ -4,7 +4,7 @@
 
 using namespace std;
 
-size_t StringMatching(const string& str, const string& sub, size_t pos)
+int StringMatching(const string& str, const string& sub, size_t pos)
 {
 	assert(pos < str.size());
 	size_t i = pos,j = 0;
