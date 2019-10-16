@@ -1,4 +1,5 @@
 #include<iostream>
+#include<string>
 #include<deque>
 #include<functional>
 #include<algorithm>
