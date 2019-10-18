@@ -24,5 +24,5 @@ int main()
 	v[0] = 1;
 	v[2] = v[0];
 	PRINT_ELEMENTS(v);
-	system("pause");
+	return 0;
 }
