@@ -1,6 +1,5 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<limits.h>
 #include<assert.h>
 
 #define MAX_VERTEX_NUM 20
