@@ -2,8 +2,16 @@
 #include<stdlib.h>
 
 #define MAX_VERTEX_NUM 20
+
 typedef char vex_type;
 typedef int adj_type;
+typedef enum{FALSE,TRUE} BOOLEAN;
+BOOLEAN Visited[MAX_VERTEX_NUM];
+
+typedef struct Queue {
+	int elem[MAX_VERTEX_NUM];
+	int front,rear;
+}Queue;
 
 typedef struct Node { 
 	int adjvex;     //邻接结点
@@ -56,6 +64,58 @@ void PrintAdjs(Graph* graph)
 			p = p->next;
 		}
 	}
+	printf("\n");
+}
+
+void DFS(Graph* graph,int v)
+{
+	Node* p;
+	Visited[v] = TRUE;
+	printf("%c ", graph->vexs[v].data);
+	p = graph->vexs[v].first_next;
+	while(p != NULL) {
+		if(!Visited[p->adjvex])
+			DFS(graph,p->adjvex);
+		p = p->next;
+	}
+}
+
+void DFS_Traverse(Graph* graph)
+{
+	for(int i = 0;i != graph->vex_num;++i) {
+		Visited[i] = FALSE;
+	}
+	for(int i = 0;i != graph->vex_num;++i) {
+		if(!Visited[i])
+			DFS(graph,i);
+	}
+}
+
+void BFS_Traverse(Graph* graph)
+{
+	Queue* q = (Queue*)malloc(sizeof(Queue));
+	q->front = q->rear = 0;
+	for(int i = 0;i != graph->vex_num;++i) {
+		Visited[i] = FALSE;
+	}
+	int w;
+	Node* p;
+	for(int i = 0;i != graph->vex_num;++i) {
+		if(!Visited[i]) {
+			q->elem[++q->rear] = i;
+			while(q->front != q->rear) {
+				w = q->elem[++q->front];
+				Visited[w] = TRUE;
+				printf("%c ", graph->vexs[w].data);
+				p = graph->vexs[w].first_next;
+				while(p != NULL) {
+					if(!Visited[p->adjvex]) 
+						q->elem[++q->rear] = p->adjvex;
+					p = p->next;
+				}
+			}
+		}
+	}
 }
 
 int main()
@@ -63,5 +123,7 @@ int main()
 	Graph graph;
 	CreateUDG(&graph);
 	PrintAdjs(&graph);
+	DFS_Traverse(&graph);
+	BFS_Traverse(&graph);
 	return 0;
 }
