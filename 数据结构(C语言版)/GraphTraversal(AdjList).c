@@ -105,6 +105,9 @@ void BFS_Traverse(Graph* graph)
 			q->elem[++q->rear] = i;
 			while(q->front != q->rear) {
 				w = q->elem[++q->front];
+				if(Visited[w]) {
+					continue;
+				}
 				Visited[w] = TRUE;
 				printf("%c ", graph->vexs[w].data);
 				p = graph->vexs[w].first_next;
@@ -116,6 +119,7 @@ void BFS_Traverse(Graph* graph)
 			}
 		}
 	}
+	free(q);
 }
 
 int main()
