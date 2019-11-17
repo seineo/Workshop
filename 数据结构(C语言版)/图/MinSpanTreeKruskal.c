@@ -93,7 +93,7 @@ void SortEdges(Edge* edges,Graph* graph)
 Edge* Kruskal(Graph* graph)
 {
 	int index = 0;
-	int loc1,loc2;
+	int loc1,loc2,end1,end2;
 	int vex_end[MAX_VERTEX_NUM];
 	for(int i = 0;i != graph->vex_num;++i)
 		vex_end[i] = i;
@@ -103,8 +103,13 @@ Edge* Kruskal(Graph* graph)
 	for(int i = 0;i != graph->adj_num;++i) {
 		loc1 = LocateVex(graph,edges[i].start);
 		loc2 = LocateVex(graph,edges[i].end);
-		if(vex_end[loc1] != vex_end[loc2]) {
-			vex_end[loc1] = loc2;
+		end1 = vex_end[loc1];
+		end2 = vex_end[loc2];
+		if(end1 != end2) {   //若不在一个连通分量，则可以连接
+			for(int v = 0;v != graph->vex_num;++v) {   //将所有在连通分量end1的点统一放入连通分量end2
+				if(vex_end[v] == end1)
+					vex_end[v] = end2;
+			}
 			result[index++] = edges[i];
 		}
 	}
