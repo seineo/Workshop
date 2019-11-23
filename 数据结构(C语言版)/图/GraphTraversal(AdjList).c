@@ -102,21 +102,21 @@ void BFS_Traverse(Graph* graph)
 	Node* p;
 	for(int i = 0;i != graph->vex_num;++i) {
 		if(!Visited[i]) {
+			Visited[i] = TRUE;
+			printf("%c ", graph->vexs[i].data);
 			q->elem[++q->rear] = i;
 			while(q->front != q->rear) {
 				w = q->elem[++q->front];
-				if(Visited[w]) {
-					continue;
-				}
-				Visited[w] = TRUE;
-				printf("%c ", graph->vexs[w].data);
 				p = graph->vexs[w].first_next;
 				while(p != NULL) {
-					if(!Visited[p->adjvex]) 
+					if(!Visited[p->adjvex]) {
+						Visited[p->adjvex] = TRUE;
+						printf("%c ",graph->vexs[p->adjvex].data);
 						q->elem[++q->rear] = p->adjvex;
+					}
 					p = p->next;
 				}
-			}
+			} 
 		}
 	}
 	free(q);
