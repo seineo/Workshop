@@ -1,53 +1,45 @@
 #include<iostream>
-#include <stack>
+#include<stack>
 #include<queue>
 #include<string>
+#include<algorithm>
 using namespace std;
 
 int main()
 {
-	stack<char> s;
-	queue<char> temp;
 	string str;
-	char front;
+	stack<char> s;
+	queue<char> q;
 	cin >> str;
-	for (auto i = str.rbegin(); i != str.rend(); ++i) {
-		s.push(*i);
-	}
-	while (!s.empty()) {
-		char top = s.top();
-		if (top == 'A') {
-			s.pop();
+	for_each(str.rbegin(),str.rend(),[&](const char& ch){s.push(ch);});
+	while(!s.empty()) {
+		char ch = s.top();
+		s.pop();
+		if(ch == 'B') {
+			string trans = "tAdA";
+			for_each(trans.rbegin(),trans.rend(),[&](const char& ch){s.push(ch);});
+		}
+		else if(ch == 'A') {
 			cout << "sae";
 		}
-		else if (top == 'B') {
-			s.pop();
-			string result = "tAdA";
-			for (auto i = result.rbegin(); i != result.rend(); ++i) {
-				s.push(*i);
-			}
-		}
-		else if (top == '(') {
-			s.pop();
-			front = s.top();
-			while (s.top() != ')') {
-				temp.push(s.top());
+		else if(ch == '(') {
+			while(s.top() != ')') {
+				q.push(s.top());
 				s.pop();
 			}
 			s.pop();
-			string result;
-			temp.pop();
-			while (!temp.empty()) {
-				result.append({ front,temp.front() });
-				temp.pop();
+			char front = q.front();
+			q.pop();
+			string trans;
+			while(!q.empty()) {
+				trans.append({front,q.front()});
+				q.pop();
 			}
-			result.push_back(front);
-			for (const auto& i : result)
-				s.push(i);
+			trans.push_back(front);
+			for_each(trans.begin(),trans.end(),[&](const char& ch){s.push(ch);});
 		}
 		else {
-			cout << s.top();
-			s.pop();
+			cout << ch;
 		}
 	}
 	return 0;
