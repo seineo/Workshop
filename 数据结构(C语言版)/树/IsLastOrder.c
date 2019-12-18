@@ -25,18 +25,18 @@ int IsLastOrder(int Order[], int len)
             return 0;
         }
     }
-    //递归判断左子树(如果左子树为空，则肯定是后序遍历，所以要初始化为1)
+    //递归判断左子树(如果左子树为空，则只需判断右子树）
     int left = 1;
     if (i > 0)
     {
         //左子树数组的长度为i
         left = IsLastOrder(Order, i);
     }
-    //递归判断右子树(如果左子树为空，则肯定是后序遍历，所以要初始化为1)
+    //递归判断右子树(如果右子树为空，则只需判断左子树)
     int right = 1;
     if (i < len - 1)
     {
-        //左子树数组的长度为len-i-1(要减去根结点)
+        //右子树数组的长度为len-i-1(要减去根结点)
         right = IsLastOrder(Order + i, len - i - 1);
     }
     return left&&right;
