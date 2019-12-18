@@ -13,10 +13,10 @@ public:
         if(root == NULL ) {
             return true;
         }
-        if(lower != LONG_MIN && root->val <= lower) {
+        if(root->val <= lower) {
             return false;
         }
-        if(upper != LONG_MAX && root->val >= upper) {
+        if(root->val >= upper) {
             return false;
         }
         if(!helper(root->left,lower,root->val)){
