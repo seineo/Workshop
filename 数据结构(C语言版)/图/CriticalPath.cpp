@@ -112,8 +112,8 @@ void CriticalPath(Graph* graph)
 		reverse_topo.pop();
 		for(int i = 0;i != graph->vex_num;++i) {
 			if(graph->adj_matrix[cur][i] != 0) {
-				if(vex_earliest[i] - graph->adj_matrix[cur][i] < vex_latest[cur])  //更新各结点的最晚发生时间
-					vex_latest[cur] = vex_earliest[i] - graph->adj_matrix[cur][i];
+				if(vex_latest[i] - graph->adj_matrix[cur][i] < vex_latest[cur])  //更新各结点的最晚发生时间
+					vex_latest[cur] = vex_latest[i] - graph->adj_matrix[cur][i];
 			}
 		}
 	}
