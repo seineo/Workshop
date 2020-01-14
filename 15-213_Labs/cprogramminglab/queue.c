@@ -72,6 +72,7 @@ bool q_insert_head(queue_t *q, char *s)
     }
     newh->value = (char*)malloc((strlen(s) + 1) * sizeof(char));   //allocate space for the string
     if(newh->value == NULL) {
+        free(newh);
     	return false;
     }
     strcpy(newh->value,s);   //copy the string
@@ -107,6 +108,7 @@ bool q_insert_tail(queue_t *q, char *s)
 	}
     newt->value = (char*)malloc((strlen(s) + 1) * sizeof(char));   //allocate space for the string
     if(newt->value == NULL) {
+        free(newt);
     	return false;
     }
     strcpy(newt->value,s);   //copy the string
