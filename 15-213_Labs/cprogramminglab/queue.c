@@ -50,7 +50,6 @@ void q_free(queue_t *q)
   	}
     /* Free queue structure */
     free(q);
-    q = NULL;
 }
 
 /*
