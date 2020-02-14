@@ -14,6 +14,23 @@ seineo@dell:~/Desktop/CS$ echo '$foo'
 $foo
 ```
 
+As with most languages, shell has functions.
+
+```shell
+vi mcd.sh
+#in mcd.sh
+mcd() {
+	mkdir -p "$1"
+	cd "$1"
+} 
+#back to terminal
+source mcd
+#now the mcd function has been defined in shell, we can execute it
+mcd hello/world
+```
+
+
+
 **Special variables**
 
 - `$0` - Name of the script
