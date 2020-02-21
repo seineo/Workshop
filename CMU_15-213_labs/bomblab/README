@@ -1,0 +1,28 @@
+This is an x86-64 bomb for self-study students. 
+
+
+
+## Hints
+
+Print out the bomb's symbol table, and then we can find some clues.
+
+```
+objdump -t bomb
+```
+
+Use gdb :
+
+```
+gdb bomb
+```
+
+To deal with functions like `phase_x()`, we can do these first :
+
+```
+b phase_x
+b explode_bomb
+```
+
+(Breakpoints can avoid the bomb explodes and help us defuse it more easily.)
+
+Then we can run it with arbitrary arguments under the debugger, watch what it does step by step, and use this information to find the right arguments and defuse it.
