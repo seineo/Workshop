@@ -29,8 +29,8 @@ public:
         int p1 = m - 1, p2 = n - 1, p = m + n - 1;
         while(p1 >= 0 && p2 >= 0) 
             nums1[p--] = (nums1[p1] > nums2[p2] ? nums1[p1--] : nums2[p2--]);
-        //In the following expression, p2 + 1 should be calculated first, or when p2 == -1(n == 0), it'll cause runtime error 
-        //since iterator can't minus an integer.
+        //In the following expression, p2 + 1 should be calculated first, or it'll cause runtime error 
+        //since nums2.begin() is a null pointer and it can't minus 1 when n == 0
         copy(nums2.begin(),nums2.begin() + (p2 + 1),nums1.begin());  
         return;
     }
