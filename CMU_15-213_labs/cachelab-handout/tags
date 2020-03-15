@@ -1,0 +1,83 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+A	tracegen.c	/^static int A[256][256];$/;"	v	file:
+ArgsInfo	csim.c	/^}ArgsInfo;$/;"	t	typeref:struct:__anon1	file:
+B	tracegen.c	/^static int B[256][256];$/;"	v	file:
+CACHELAB_TOOLS_H	cachelab.h	6;"	d
+CC	Makefile	/^CC = gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -g -Wall -Werror -std=c99 -m64$/;"	m
+Cache	csim.c	/^typedef CacheSet* Cache;$/;"	t	file:
+CacheLine	csim.c	/^}CacheLine;$/;"	t	typeref:struct:__anon2	file:
+CacheSet	csim.c	/^}CacheSet;$/;"	t	typeref:struct:__anon3	file:
+LRU_counter	csim.c	/^    size_t LRU_counter;$/;"	m	struct:__anon2	file:
+M	test-trans.c	/^static int M = 0;$/;"	v	file:
+M	tracegen.c	/^static int M;$/;"	v	file:
+MARKER_END	tracegen.c	/^volatile char MARKER_START, MARKER_END;$/;"	v
+MARKER_START	tracegen.c	/^volatile char MARKER_START, MARKER_END;$/;"	v
+MAXN	test-trans.c	19;"	d	file:
+MAX_TRANS_FUNCS	cachelab.h	8;"	d
+N	test-trans.c	/^static int N = 0;$/;"	v	file:
+N	tracegen.c	/^static int N;$/;"	v	file:
+SUBMIT_DESCRIPTION	test-trans.c	23;"	d	file:
+args_info	csim.c	/^ArgsInfo args_info;$/;"	v
+block_num	csim.c	/^    int block_num;$/;"	m	struct:__anon1	file:
+check_option_errors	csim.c	/^void check_option_errors(char opt, char *optarg) {$/;"	f
+computeMissScore	driver.py	/^def computeMissScore(miss, lower, upper, full_score):$/;"	f
+correct	cachelab.h	/^  char correct;$/;"	m	struct:trans_func
+correct	test-trans.c	/^    int correct;$/;"	m	struct:results	file:
+correctTrans	cachelab.c	/^void correctTrans(int M, int N, int A[N][M], int B[M][N])$/;"	f
+description	cachelab.h	/^  char* description;$/;"	m	struct:trans_func
+eval_perf	test-trans.c	/^void eval_perf(unsigned int s, unsigned int E, unsigned int b)$/;"	f
+evict	csim.c	/^size_t hit, miss, evict;$/;"	v
+free_cache	csim.c	/^void free_cache(Cache cache) {  $/;"	f
+func_counter	cachelab.c	/^int func_counter = 0; $/;"	v
+func_list	cachelab.c	/^trans_func_t func_list[MAX_TRANS_FUNCS];$/;"	v
+func_ptr	cachelab.h	/^  void (*func_ptr)(int M,int N,int[N][M],int[M][N]);$/;"	m	struct:trans_func
+funcid	test-trans.c	/^    int funcid;$/;"	m	struct:results	file:
+hit	csim.c	/^size_t hit, miss, evict;$/;"	v
+initMatrix	cachelab.c	/^void initMatrix(int M, int N, int A[N][M], int B[M][N])$/;"	f
+initialize_cache	csim.c	/^Cache initialize_cache() {$/;"	f
+is_hit	csim.c	/^bool is_hit(Cache cache, size_t set_index, int addr_tag) {$/;"	f
+is_transpose	trans.c	/^int is_transpose(int M, int N, int A[N][M], int B[M][N])$/;"	f
+line_num	csim.c	/^    int line_num;$/;"	m	struct:__anon1	file:
+lines	csim.c	/^    CacheLine *lines;$/;"	m	struct:__anon3	file:
+load_and_store	csim.c	/^void load_and_store(Cache cache, size_t set_index, int addr_tag) {$/;"	f
+main	csim.c	/^int main(int argc, char **argv)$/;"	f
+main	driver.py	/^def main():$/;"	f
+main	test-trans.c	/^int main(int argc, char* argv[])$/;"	f
+main	tracegen.c	/^int main(int argc, char* argv[]){$/;"	f
+miss	csim.c	/^size_t hit, miss, evict;$/;"	v
+misses	test-trans.c	/^    int misses;$/;"	m	struct:results	file:
+num_evictions	cachelab.h	/^  unsigned int num_evictions;$/;"	m	struct:trans_func
+num_hits	cachelab.h	/^  unsigned int num_hits;$/;"	m	struct:trans_func
+num_misses	cachelab.h	/^  unsigned int num_misses;$/;"	m	struct:trans_func
+parse_args	csim.c	/^void parse_args(int argc, char **argv) {$/;"	f
+printSummary	cachelab.c	/^void printSummary(int hits, int misses, int evictions)$/;"	f
+print_help_info	csim.c	/^void print_help_info() {$/;"	f
+randMatrix	cachelab.c	/^void randMatrix(int M, int N, int A[N][M]) {$/;"	f
+registerFunctions	trans.c	/^void registerFunctions()$/;"	f
+registerTransFunction	cachelab.c	/^void registerTransFunction(void (*trans)(int M, int N, int[N][M], int[M][N]), $/;"	f
+results	test-trans.c	/^static struct results results = {-1, 0, INT_MAX};$/;"	v	typeref:struct:results	file:
+results	test-trans.c	/^struct results {$/;"	s	file:
+set_num	csim.c	/^    int set_num;$/;"	m	struct:__anon1	file:
+sigalrm_handler	test-trans.c	/^void sigalrm_handler(int signum){$/;"	f
+sigsegv_handler	test-trans.c	/^void sigsegv_handler(int signum){$/;"	f
+tag	csim.c	/^    int tag;$/;"	m	struct:__anon2	file:
+test_is_hit	csim.c	/^void test_is_hit() {$/;"	f
+test_load_and_store	csim.c	/^void test_load_and_store() {$/;"	f
+test_parse_args	csim.c	/^void test_parse_args(int argc, char **argv) {$/;"	f
+trace_file	csim.c	/^    char *trace_file;$/;"	m	struct:__anon1	file:
+trans	trans.c	/^void trans(int M, int N, int A[N][M], int B[M][N])$/;"	f
+trans_desc	trans.c	/^char trans_desc[] = "Simple row-wise scan transpose";$/;"	v
+trans_func	cachelab.h	/^typedef struct trans_func{$/;"	s
+trans_func_t	cachelab.h	/^} trans_func_t;$/;"	t	typeref:struct:trans_func
+transpose_submit	trans.c	/^void transpose_submit(int M, int N, int A[N][M], int B[M][N])$/;"	f
+transpose_submit_desc	trans.c	/^char transpose_submit_desc[] = "Transpose submission";$/;"	v
+usage	test-trans.c	/^void usage(char *argv[]){$/;"	f
+valid	csim.c	/^    bool valid;$/;"	m	struct:__anon2	file:
+validate	tracegen.c	/^int validate(int fn,int M, int N, int A[N][M], int B[M][N]) {$/;"	f
+verbose	csim.c	/^    bool verbose;$/;"	m	struct:__anon1	file:

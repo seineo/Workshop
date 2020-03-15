@@ -7,6 +7,7 @@
 #include<math.h>
 #include<string.h>
 #include<assert.h>
+#include<limits.h>
 
 /*
  * This struct stores info about cache from command-line arguments
@@ -38,7 +39,7 @@ typedef struct {
 
 typedef CacheSet* Cache;
 
-size_t hit, miss, evict;
+size_t hit, miss, eviction;
 
 /*
  * print_help_info - When meeting -h or option errors, print help info 
@@ -161,7 +162,26 @@ bool is_hit(Cache cache, size_t set_index, int addr_tag) {
 }
 
 /*
- * load_and store - If cache hit, do nothing other than increment hit counter. 
+ * find_line_to_replace - 
+ */
+int find_line_to_replace(Cache cache, size_t set_index) {
+    int min = INT_MAX;
+    int min_line = 0;
+    for(int i = 0;i != args_info.line_num;++i) {
+        int cur_counter = cache[set_index].lines[i].LRU_counter;
+        if(cur_counter == 0) {
+            return i;
+        } 
+        if(cur_counter < min) {
+            min = cur_counter;
+            min_line = i;
+        }
+    }
+    return min_line;
+}
+
+/*
+ * load_and store - If cache hit, do nothing other than incrementing hit counter. 
  *                  If the cache set is not full but miss, increment miss counter
  *                  and update cache. If cache is full and miss, we use the LRU
  *                  replacement policy to choose line to evict.
@@ -169,11 +189,27 @@ bool is_hit(Cache cache, size_t set_index, int addr_tag) {
 void load_and_store(Cache cache, size_t set_index, int addr_tag) {
     if(is_hit(cache, set_index, addr_tag)) {
         hit++;
-        if(args_info.verbose) 
+        if(args_info.verbose) {
             printf("hit\n");
+        }
     } else {
         miss++;
-        for()
+        int line_index = find_line_to_replace(cache, set_index);
+        CacheLine *target_line = &cache[set_index].lines[line_index];
+        if(target_line->LRU_counter == 0) {
+            if(args_info.verbose) {
+                printf("miss\n");
+            }
+            target_line->valid = true;
+            target_line->tag = addr_tag;
+        } else {
+            eviction++;
+            if(args_info.verbose) {
+                printf("miss eviction\n");
+            }
+            target_line->tag = addr_tag;  
+        }
+        target_line->LRU_counter++;
     }
 }
 
@@ -206,26 +242,45 @@ void test_is_hit() {
     free_cache(cache);
 }
 
+void test_find_line_to_replace() {
+    //test the situation that LCU counters are all 0
+    Cache cache = initialize_cache();
+    assert(find_line_to_replace(cache, 0) == 0);
+    //test the situation that all 2 other than that in first line is 0
+    for(int i = 1;i != args_info.line_num;++i) {
+        cache[0].lines[i].LRU_counter = 2;
+    }
+    assert(find_line_to_replace(cache, 0) == 0);
+    //test the situation taht all 2 other than that in first line is 3
+    cache[0].lines[0].LRU_counter = 3;
+    assert(find_line_to_replace(cache, 0) == 1);
+    //test the situation that all 2, except 3 in the first line and 1 in the last line
+    cache[0].lines[args_info.line_num - 1].LRU_counter = 1;
+    assert(find_line_to_replace(cache, 0) == args_info.line_num - 1);
+    free_cache(cache);
+}
+
 void test_load_and_store() {
     //test miss
-    initialize_cache();
-    load_and_store(0,0);
-    assert(hit == 0 && miss == 1 && evict == 0);
+    Cache cache = initialize_cache();
+    load_and_store(cache, 0, 0);
+    assert(hit == 0 && miss == 1 && eviction == 0);
     //test hit
-    load_and_store(0,0);
-    assert(hit == 1 && miss = 1 && evict == 0);
-    //test evict
+    load_and_store(cache, 0, 0);
+    assert(hit == 1 && miss == 1 && eviction == 0);
+    //test eviction
     for(int i = 1;i <= args_info.line_num;++i) {
-        load_and_store(0,i);
+        load_and_store(cache, 0, i);
     }
-    assert(hit == 1 && miss == 3 && evict == 1);
+    assert(hit == 1 && miss == args_info.line_num + 1 && eviction == 1);
 }
 
 int main(int argc, char **argv)
 {
     parse_args(argc, argv);
-    //test_parse_args(argc,argv);
-    //test_is_hit();
+    test_parse_args(argc,argv);
+    test_is_hit();
+    test_find_line_to_replace();
     test_load_and_store();
         
     //open trace file
