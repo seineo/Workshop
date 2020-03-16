@@ -31,7 +31,7 @@ typedef struct {
 }CacheLine;
 
 /*
- * This struct stores cache sets which contains the array of cache lines
+ * This struct stores cache set which contains the array of cache lines
  */
 typedef struct {
     CacheLine *lines;
@@ -111,8 +111,6 @@ void parse_args(int argc, char **argv) {
 
 /*
  * initialize_cache - Allocate dynamic memory to initialize cache with S and E. 
- *                    If set_num and line_num > 0, return the pointer to the dynamic 
- *                    memory. Otherwise, return NULL.
  */
 Cache initialize_cache() {
     if(args_info.set_num <= 0 || args_info.line_num <= 0)
@@ -135,8 +133,7 @@ Cache initialize_cache() {
 }
 
 /*
- * free_cache - If the pointer isn't NULL, free dynamic memory allocated for cache.
- *              Otherwise, return directly.
+ * free_cache - Free dynamic memory allocated for cache.
  */
 void free_cache(Cache cache) {  
     if(!cache)
@@ -150,7 +147,7 @@ void free_cache(Cache cache) {
 
 /*
  * is_hit() - Judge whether cache hit or not by checking valid bit and tag.
- *            If cache hit, increment corresponding LRU_counter
+ *            If cache hit, update corresponding LRU_counter
  */
 bool is_hit(Cache cache, size_t set_index, int addr_tag) {
     for(int i = 0;i != args_info.line_num;++i) {
@@ -164,7 +161,9 @@ bool is_hit(Cache cache, size_t set_index, int addr_tag) {
 }
 
 /*
- * find_line_to_replace - 
+ * find_line_to_replace - When the cache set is full and cache miss, iterate
+ *                        over cache lines and find the least-recently used one 
+ *                        to replace 
  */
 int find_line_to_replace(Cache cache, size_t set_index) {
     int min = INT_MAX;
@@ -183,12 +182,10 @@ int find_line_to_replace(Cache cache, size_t set_index) {
 }
 
 /*
- * load_and store - If cache hit, do nothing other than incrementing hit counter. 
- *                  If the cache set is not full but miss, increment miss counter
- *                  and update cache. If cache is full and miss, we use the LRU
- *                  replacement policy to choose line to evict.
+ * load_or_store - load data to "register" or store data to "memory". 
+ *                 Hit, miss and eviction need be taken into account.
  */
-void load_and_store(Cache cache, size_t set_index, int addr_tag) {
+void load_or_store(Cache cache, size_t set_index, int addr_tag) {
     if(is_hit(cache, set_index, addr_tag)) {
         hit++;
         if(args_info.verbose) {
@@ -215,13 +212,15 @@ void load_and_store(Cache cache, size_t set_index, int addr_tag) {
     }
 }
 
+/*
+ * modify - Treated as a load followed by a store to the same address
+ */
 void modify(Cache cache, size_t set_index, int addr_tag) {
-    //data load
-    load_and_store(cache, set_index, addr_tag);
-    //data store
-    load_and_store(cache, set_index, addr_tag);
+    load_or_store(cache, set_index, addr_tag);
+    load_or_store(cache, set_index, addr_tag);
 }
 
+#if 0
 void test_parse_args(int argc, char **argv) {
     //test -s 10 -E 4 -b 2 -t ./test-trace-file.trace
     parse_args(argc, argv);
@@ -268,17 +267,17 @@ void test_find_line_to_replace() {
     free_cache(cache);
 }
 
-void test_load_and_store() {
+void test_load_or_store() {
     //test miss
     Cache cache = initialize_cache();
-    load_and_store(cache, 0, 0);
+    load_or_store(cache, 0, 0);
     assert(hit == 0 && miss == 1 && eviction == 0);
     //test hit
-    load_and_store(cache, 0, 0);
+    load_or_store(cache, 0, 0);
     assert(hit == 1 && miss == 1 && eviction == 0);
     //test eviction
     for(int i = 1;i <= args_info.line_num;++i) {
-        load_and_store(cache, 0, i);
+        load_or_store(cache, 0, i);
     }
     assert(hit == 1 && miss == args_info.line_num + 1 && eviction == 1);
     //restore global variables
@@ -302,36 +301,34 @@ void test_modify() {
     //restore global variables
     hit = miss = eviction = 0;
 }
+#endif
 
 int main(int argc, char **argv)
 {
-    /*
+#if 0
     test_parse_args(argc,argv);
     test_is_hit();
     test_find_line_to_replace();
-    test_load_and_store();
+    test_load_or_store();
     test_modify();    
-    */
-    
+#endif 
     parse_args(argc, argv);
-
     //open trace file
     FILE *fp = fopen(args_info.trace_file, "r");
     if(!fp) {
         perror("File opening failed");
         exit(EXIT_FAILURE);
     }
-    
+    //create cache 
     Cache cache = initialize_cache();
-
     //parse trace file line by line
     char opt;
     int address;
     size_t size;
     size_t mask = (1 << args_info.set_num) - 1;
 
-    //note that by using a whitespace character before %c, we can
-    //consume all consecutive leading whitespaces
+    /*note that by using a whitespace character before %c, we can
+        consume all consecutive leading whitespaces */
     while(fscanf(fp, " %c %x,%zu", &opt, &address, &size) == 3) {
         if(opt == 'I') 
             continue;
@@ -340,13 +337,14 @@ int main(int argc, char **argv)
         size_t set_index = ((address >> args_info.block_num) & mask) % S; 
         int addr_tag = address >> (args_info.block_num + args_info.set_num);
         if(opt == 'L' || opt == 'S') {
-            load_and_store(cache, set_index, addr_tag);
+            load_or_store(cache, set_index, addr_tag);
         } else {
             modify(cache, set_index, addr_tag);
         }
         printf("\n");
     }
     printSummary(hit, miss, eviction);
+    //free dynamic memory
     free_cache(cache);
     return 0;
 }
