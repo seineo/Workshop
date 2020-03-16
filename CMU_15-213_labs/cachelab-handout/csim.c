@@ -48,13 +48,13 @@ size_t time_stamps;
  *                   to stdout
  */
 void print_help_info() {
-    printf("Usage: ./csim-ref [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
+    printf("Usage: ./csim [-hv] -s <s> -E <E> -b <b> -t <tracefile>\n");
     printf("Options:\n");
     printf("-h: Optional help flag that prints usage info\n");
     printf("-v: Optional verbose flag that displays trace info\n");
     printf("-s <s>: Number of set index bits(S = 2^s is the number of sets)\n");
     printf("-E <E>: Associativity (number of lines per set)\n");
-    printf("-b <b>: Number of block bits (B = 2 ^ b is the block size)\n");
+    printf("-b <b>: Number of block bits (B = 2^b is the block size)\n");
     printf("-t <tracefile>: Name of the valgrind trace to replay\n");
     exit(0);
 }
