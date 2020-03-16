@@ -13,6 +13,7 @@ CFLAGS	Makefile	/^CFLAGS = -g -Wall -Werror -std=c99 -m64$/;"	m
 Cache	csim.c	/^typedef CacheSet* Cache;$/;"	t	file:
 CacheLine	csim.c	/^}CacheLine;$/;"	t	typeref:struct:__anon2	file:
 CacheSet	csim.c	/^}CacheSet;$/;"	t	typeref:struct:__anon3	file:
+E	csim.c	/^int S, E;$/;"	v
 LRU_counter	csim.c	/^    size_t LRU_counter;$/;"	m	struct:__anon2	file:
 M	test-trans.c	/^static int M = 0;$/;"	v	file:
 M	tracegen.c	/^static int M;$/;"	v	file:
@@ -22,6 +23,7 @@ MAXN	test-trans.c	19;"	d	file:
 MAX_TRANS_FUNCS	cachelab.h	8;"	d
 N	test-trans.c	/^static int N = 0;$/;"	v	file:
 N	tracegen.c	/^static int N;$/;"	v	file:
+S	csim.c	/^int S, E;$/;"	v
 SUBMIT_DESCRIPTION	test-trans.c	23;"	d	file:
 args_info	csim.c	/^ArgsInfo args_info;$/;"	v
 block_num	csim.c	/^    int block_num;$/;"	m	struct:__anon1	file:
@@ -32,13 +34,14 @@ correct	test-trans.c	/^    int correct;$/;"	m	struct:results	file:
 correctTrans	cachelab.c	/^void correctTrans(int M, int N, int A[N][M], int B[M][N])$/;"	f
 description	cachelab.h	/^  char* description;$/;"	m	struct:trans_func
 eval_perf	test-trans.c	/^void eval_perf(unsigned int s, unsigned int E, unsigned int b)$/;"	f
-evict	csim.c	/^size_t hit, miss, evict;$/;"	v
+eviction	csim.c	/^size_t hit, miss, eviction;$/;"	v
+find_line_to_replace	csim.c	/^int find_line_to_replace(Cache cache, size_t set_index) {$/;"	f
 free_cache	csim.c	/^void free_cache(Cache cache) {  $/;"	f
 func_counter	cachelab.c	/^int func_counter = 0; $/;"	v
 func_list	cachelab.c	/^trans_func_t func_list[MAX_TRANS_FUNCS];$/;"	v
 func_ptr	cachelab.h	/^  void (*func_ptr)(int M,int N,int[N][M],int[M][N]);$/;"	m	struct:trans_func
 funcid	test-trans.c	/^    int funcid;$/;"	m	struct:results	file:
-hit	csim.c	/^size_t hit, miss, evict;$/;"	v
+hit	csim.c	/^size_t hit, miss, eviction;$/;"	v
 initMatrix	cachelab.c	/^void initMatrix(int M, int N, int A[N][M], int B[M][N])$/;"	f
 initialize_cache	csim.c	/^Cache initialize_cache() {$/;"	f
 is_hit	csim.c	/^bool is_hit(Cache cache, size_t set_index, int addr_tag) {$/;"	f
@@ -50,8 +53,9 @@ main	csim.c	/^int main(int argc, char **argv)$/;"	f
 main	driver.py	/^def main():$/;"	f
 main	test-trans.c	/^int main(int argc, char* argv[])$/;"	f
 main	tracegen.c	/^int main(int argc, char* argv[]){$/;"	f
-miss	csim.c	/^size_t hit, miss, evict;$/;"	v
+miss	csim.c	/^size_t hit, miss, eviction;$/;"	v
 misses	test-trans.c	/^    int misses;$/;"	m	struct:results	file:
+modify	csim.c	/^void modify(Cache cache, size_t set_index, int addr_tag) {$/;"	f
 num_evictions	cachelab.h	/^  unsigned int num_evictions;$/;"	m	struct:trans_func
 num_hits	cachelab.h	/^  unsigned int num_hits;$/;"	m	struct:trans_func
 num_misses	cachelab.h	/^  unsigned int num_misses;$/;"	m	struct:trans_func
@@ -67,8 +71,10 @@ set_num	csim.c	/^    int set_num;$/;"	m	struct:__anon1	file:
 sigalrm_handler	test-trans.c	/^void sigalrm_handler(int signum){$/;"	f
 sigsegv_handler	test-trans.c	/^void sigsegv_handler(int signum){$/;"	f
 tag	csim.c	/^    int tag;$/;"	m	struct:__anon2	file:
+test_find_line_to_replace	csim.c	/^void test_find_line_to_replace() {$/;"	f
 test_is_hit	csim.c	/^void test_is_hit() {$/;"	f
 test_load_and_store	csim.c	/^void test_load_and_store() {$/;"	f
+test_modify	csim.c	/^void test_modify() {$/;"	f
 test_parse_args	csim.c	/^void test_parse_args(int argc, char **argv) {$/;"	f
 trace_file	csim.c	/^    char *trace_file;$/;"	m	struct:__anon1	file:
 trans	trans.c	/^void trans(int M, int N, int A[N][M], int B[M][N])$/;"	f

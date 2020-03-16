@@ -39,6 +39,7 @@ typedef struct {
 
 typedef CacheSet* Cache;
 
+int S, E;
 size_t hit, miss, eviction;
 
 /*
@@ -115,8 +116,8 @@ void parse_args(int argc, char **argv) {
 Cache initialize_cache() {
     if(args_info.set_num <= 0 || args_info.line_num <= 0)
         return NULL;
-    int S = pow(2, args_info.set_num);
-    int E = args_info.line_num;
+    S = pow(2, args_info.set_num);
+    E = args_info.line_num;
     Cache cache = (Cache)calloc(S, sizeof(CacheSet));
     if(!cache) {
         perror("calloc failed");
@@ -190,7 +191,7 @@ void load_and_store(Cache cache, size_t set_index, int addr_tag) {
     if(is_hit(cache, set_index, addr_tag)) {
         hit++;
         if(args_info.verbose) {
-            printf("hit\n");
+            printf("hit ");
         }
     } else {
         miss++;
@@ -198,14 +199,14 @@ void load_and_store(Cache cache, size_t set_index, int addr_tag) {
         CacheLine *target_line = &cache[set_index].lines[line_index];
         if(target_line->LRU_counter == 0) {
             if(args_info.verbose) {
-                printf("miss\n");
+                printf("miss ");
             }
             target_line->valid = true;
             target_line->tag = addr_tag;
         } else {
             eviction++;
             if(args_info.verbose) {
-                printf("miss eviction\n");
+                printf("miss eviction ");
             }
             target_line->tag = addr_tag;  
         }
@@ -213,13 +214,19 @@ void load_and_store(Cache cache, size_t set_index, int addr_tag) {
     }
 }
 
+void modify(Cache cache, size_t set_index, int addr_tag) {
+    //data load
+    load_and_store(cache, set_index, addr_tag);
+    //data store
+    load_and_store(cache, set_index, addr_tag);
+}
 
 void test_parse_args(int argc, char **argv) {
-    //test -v -s 10 -E 4 -b 2 -t ./test-trace-file.trace
+    //test -s 10 -E 4 -b 2 -t ./test-trace-file.trace
+    parse_args(argc, argv);
     if(argc == 9 && strcmp(argv[1], "-s") == 0 && strcmp(argv[3], "-E") == 0 
             && strcmp(argv[5],"-b") == 0 && strcmp(argv[7], "-t") == 0) {
-        parse_args(argc, argv);
-        assert(args_info.verbose == true);
+        assert(args_info.verbose == false);
         assert(args_info.set_num == 10);
         assert(args_info.line_num == 4);
         assert(args_info.block_num == 2);
@@ -273,46 +280,72 @@ void test_load_and_store() {
         load_and_store(cache, 0, i);
     }
     assert(hit == 1 && miss == args_info.line_num + 1 && eviction == 1);
+    //restore global variables
+    hit = miss = eviction = 0;
+}
+
+void test_modify() {
+    Cache cache = initialize_cache();
+    //test miss + hit
+    modify(cache, 0, 0);
+    assert(hit == 1 && miss == 1 && eviction == 0);
+    //test hit + hit
+    modify(cache, 0, 0);
+    assert(hit == 3 && miss == 1 && eviction == 0);
+    //test miss + eviction + hit
+    for(int i = 1;i <= args_info.line_num;++i) {
+        modify(cache, 0, i);
+    }
+    assert(hit == args_info.line_num + 3 && miss == args_info.line_num + 1 
+            && eviction == 1);
+    //restore global variables
+    hit = miss = eviction = 0;
 }
 
 int main(int argc, char **argv)
 {
-    parse_args(argc, argv);
+    /*
     test_parse_args(argc,argv);
     test_is_hit();
     test_find_line_to_replace();
     test_load_and_store();
-        
-    //open trace file
-   // FILE *fp = fopen(args_info.trace_file, "r");
-   // if(!fp) {
-   //     perror("File opening failed");
-   //     exit(EXIT_FAILURE);
-   // }
+    test_modify();    
+    */
     
-    //Cache cache = initialize_cache();
+    parse_args(argc, argv);
 
-   // //parse trace file line by line
-   // char opt;
-   // size_t address;
-   // size_t size;
-   // size_t mask = 0;
-   // for(int i = 0;i != args_info.set_num;++i) {
-   //     mask = (mask << 1) + 0xf;
-   // }
-   // while(fscanf(fp, "%c %zu,%zu", &opt, &address, &size) == 3) {
-   //     if(opt == 'I') 
-   //         continue;
-   //     if(args_info.verbose)
-   //         printf("%c %zu,%zu ", opt, address, size);
-   //     size_t set_index = (address >> args_info.block_num) & mask;
-   //     int addr_tag = address >> (args_info.block_num + args_info.set_num);
-   //     if(opt == 'L' || opt == 'S') {
-   //         load_and_store(set_index, addr_tag);
-   //     } else {
-   //         modify(set_index, addr_tag);
-   //     }
-   // }
-    //printSummary(0, 0, 0);
+    //open trace file
+    FILE *fp = fopen(args_info.trace_file, "r");
+    if(!fp) {
+        perror("File opening failed");
+        exit(EXIT_FAILURE);
+    }
+    
+    Cache cache = initialize_cache();
+
+    //parse trace file line by line
+    char opt;
+    int address;
+    size_t size;
+    size_t mask = (1 << args_info.set_num) - 1;
+
+    //note that by using a whitespace character before %c, we can
+    //consume all consecutive leading whitespaces
+    while(fscanf(fp, " %c %x,%zu", &opt, &address, &size) == 3) {
+        if(opt == 'I') 
+            continue;
+        if(args_info.verbose)
+            printf("%c %x,%zu ", opt, address, size);
+        size_t set_index = ((address >> args_info.block_num) & mask) % S; 
+        int addr_tag = address >> (args_info.block_num + args_info.set_num);
+        if(opt == 'L' || opt == 'S') {
+            load_and_store(cache, set_index, addr_tag);
+        } else {
+            modify(cache, set_index, addr_tag);
+        }
+        printf("\n");
+    }
+    printSummary(hit, miss, eviction);
+    free_cache(cache);
     return 0;
 }
