@@ -41,6 +41,7 @@ typedef CacheSet* Cache;
 
 int S, E;
 size_t hit, miss, eviction;
+size_t time_stamps;
 
 /*
  * print_help_info - When meeting -h or option errors, print help info 
@@ -155,7 +156,7 @@ bool is_hit(Cache cache, size_t set_index, int addr_tag) {
     for(int i = 0;i != args_info.line_num;++i) {
         if(cache[set_index].lines[i].valid == true && 
                 cache[set_index].lines[i].tag == addr_tag) {
-            cache[set_index].lines[i].LRU_counter++;
+            cache[set_index].lines[i].LRU_counter = ++time_stamps;
             return true;
         }
     }
@@ -210,7 +211,7 @@ void load_and_store(Cache cache, size_t set_index, int addr_tag) {
             }
             target_line->tag = addr_tag;  
         }
-        target_line->LRU_counter++;
+        target_line->LRU_counter = ++time_stamps;
     }
 }
 
