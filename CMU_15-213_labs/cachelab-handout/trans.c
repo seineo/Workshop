@@ -52,9 +52,9 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 char trans_simple_blocking_desc[] = "Simple blocking scan transpose";
 void trans_simple_blocking(int M, int N, int A[N][M], int B[M][N]) {
     /*
-     * Along the diagonal(4 blocks),each block has 8*2 + 8 + 7*2 = 38 misses.
+     * Along the diagonal(4 blocks), each block has 8*2 + 8 + 7*2 = 38 misses.
      * In other blocks, each has 8 + 8 = 16 misses. In total, 4*38 + 12*16
-     * = 344 misses
+     * = 344 misses.
      */
     int i_c, j_c, i, j;
     int b_size = 8;
@@ -73,6 +73,11 @@ void trans_simple_blocking(int M, int N, int A[N][M], int B[M][N]) {
 
 char trans_copy_desc[] = "Copy transpose";
 void trans_copy(int M, int N, int A[N][M], int B[M][N]) {
+    /*
+     * Use local variables(stored in registers) to reduce misses.
+     * Along the diagonal(4 blocks), 8 + 8 + 7 = 23 misses. In other blocks,
+     * each has 8 + 8 = 16 misses. In total, 4*23 + 12*16 = 284 misses.
+     */
     int i_c, j_c, k;
     int b_size = 8;
     //control loops
