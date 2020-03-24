@@ -13,19 +13,20 @@
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
 /*
- * trans_32 - Use local variables(stored in registers) to reduce misses.
- *    Along the diagonal(4 blocks), 8 + 8 + 7 = 23 misses. In other blocks,
- *    each has 8 + 8 = 16 misses. In total, 4*23 + 12*16 = 284 misses.
+ * trans_32 - Use blocking and local variables(stored in registers) to 
+ *    reduce misses. Along the diagonal(4 blocks), 8 + 8 + 7 = 23 misses.
+ *    In other blocks, each has 8 + 8 = 16 misses. In total, 4*23 + 12*16
+ *    = 284 misses.
  */
 char trans_32_desc[] = "32X32 transpose";
 void trans_32(int M, int N, int A[N][M], int B[M][N]) {
-    int i_c, j_c, k;
+    int i, j_c, k;
     int b_size = 8;
     //control loops
-    for(i_c = 0;i_c < N;i_c += b_size) {
+    for(i = 0;i < N;i += b_size) {
         for(j_c = 0;j_c < M;j_c += b_size) {
             //copy inside block
-            for(k = i_c;k < i_c + b_size;++k) {
+            for(k = i;k < i + b_size;++k) {
                 int a0 = A[k][j_c], a1 = A[k][j_c + 1], a2 = A[k][j_c + 2];
                 int a3 = A[k][j_c + 3], a4 = A[k][j_c + 4], a5 = A[k][j_c + 5];
                 int a6 = A[k][j_c + 6], a7 = A[k][j_c + 7];
@@ -43,106 +44,64 @@ void trans_32(int M, int N, int A[N][M], int B[M][N]) {
 }
 
 /*
- * trans_64 - Too hard for me.
- *          Reference: https://www.jianshu.com/p/e68dd8305e9c
+ * trans_64 - Use blocking and complex copy.
+ *          Reference: https://zhuanlan.zhihu.com/p/28585726
  */
 char trans_64_desc[] = "64x64 transpose";
 void trans_64(int M, int N, int A[N][M], int B[M][N]) {
-    int i, j, k, tmp;
+    int i, j, k, temp;
     int b_size = 8;
     int a0, a1, a2, a3, a4, a5, a6, a7;
-    for (i = 0; i < N; i += b_size) {
-        for (j = 0; j < M; j += b_size) {
-            for (k = 0; k < b_size / 2; k++) {
-                // A top left
-                a0 = A[k + i][j];
-                a1 = A[k + i][j + 1];
-                a2 = A[k + i][j + 2];
-                a3 = A[k + i][j + 3];
-
-                // copy
-                // A top right
-                a4 = A[k + i][j + 4];
-                a5 = A[k + i][j + 5];
-                a6 = A[k + i][j + 6];
-                a7 = A[k + i][j + 7];
-
-                // B top left
-                B[j][k + i] = a0;
-                B[j + 1][k + i] = a1;
-                B[j + 2][k + i] = a2;
-                B[j + 3][k + i] = a3;
-
-                // copy
-                // B top right
-                B[j + 0][k + 4 + i] = a4;
-                B[j + 1][k + 4 + i] = a5;
-                B[j + 2][k + 4 + i] = a6;
-                B[j + 3][k + 4 + i] = a7;
+    //control loop
+    for(i = 0;i < N;i += b_size) {
+        for(j = 0;j < M;j += b_size) {
+            //copy inside block(complex)
+            for(k = 0;k < b_size / 2;++k) {
+                a0 = A[i + k][j];   a1 = A[i + k][j + 1];
+                a2 = A[i + k][j + 2];   a3 = A[i + k][j + 3];
+                a4 = A[i + k][j + 4];   a5 = A[i + k][j + 5];
+                a6 = A[i + k][j + 6];   a7 = A[i + k][j + 7];
+                B[j][i + k] = a0;   B[j + 1][i + k] = a1;
+                B[j + 2][i + k] = a2;   B[j + 3][i + k] = a3;
+                B[j][i + k + 4] = a4;   B[j + 1][i + k + 4] = a5;
+                B[j + 2][i + k + 4] = a6;   B[j + 3][i + k + 4] = a7;
             }
-            for (k = 0; k < b_size / 2; k++) {
-                // step 1 2
-                a0 = A[i + 4][j + k], a4 = A[i + 4][j + k + 4];
-                a1 = A[i + 5][j + k], a5 = A[i + 5][j + k + 4];
-                a2 = A[i + 6][j + k], a6 = A[i + 6][j + k + 4];
-                a3 = A[i + 7][j + k], a7 = A[i + 7][j + k + 4];
-                // step 3
-                tmp = B[j + k][i + 4], B[j + k][i + 4] = a0, a0 = tmp;
-                tmp = B[j + k][i + 5], B[j + k][i + 5] = a1, a1 = tmp;
-                tmp = B[j + k][i + 6], B[j + k][i + 6] = a2, a2 = tmp;
-                tmp = B[j + k][i + 7], B[j + k][i + 7] = a3, a3 = tmp;
-                // step 4
-                B[j + k + 4][i + 0] = a0, B[j + k + 4][i + 4 + 0] = a4;
-                B[j + k + 4][i + 1] = a1, B[j + k + 4][i + 4 + 1] = a5;
-                B[j + k + 4][i + 2] = a2, B[j + k + 4][i + 4 + 2] = a6;
-                B[j + k + 4][i + 3] = a3, B[j + k + 4][i + 4 + 3] = a7;
+            for(k = 0;k < b_size / 2;++k) {
+                a0 = A[i + 4][j + k];   a1 = A[i + 5][j + k];
+                a2 = A[i + 6][j + k];   a3 = A[i + 7][j + k];
+                a4 = A[i + 4][j + k + 4];   a5 = A[i + 5][j + k + 4];
+                a6 = A[i + 6][j + k + 4];   a7 = A[i + 7][j + k + 4];
+                temp = B[j + k][i + 4]; B[j + k][i + 4] = a0;   a0 = temp;
+                temp = B[j + k][i + 5]; B[j + k][i + 5] = a1;   a1 = temp;
+                temp = B[j + k][i + 6]; B[j + k][i + 6] = a2;   a2 = temp;
+                temp = B[j + k][i + 7]; B[j + k][i + 7] = a3;   a3 = temp;
+                B[j + k + 4][i] = a0;   B[j + k + 4][i + 1] = a1;  
+                B[j + k + 4][i + 2] = a2;   B[j + k + 4][i + 3] = a3;
+                B[j + k + 4][i + 4] = a4;   B[j + k + 4][i + 5] = a5;
+                B[j + k + 4][i + 6] = a6;   B[j + k + 4][i + 7] = a7;
             }
         }
     }
 }
 
-int min(int a, int b) {
-    return a < b ? a : b;
-}
 
 /*
- * trans_61 - Enumerate block size and find the minimum size is 23 
+ * trans_61 - Enumerate block size and find size 16 is ok.
+ *            Then use blocking and block size is 16.
  */
 char trans_61_desc[] = "61X67 transpose";
 void trans_61(int M, int N, int A[N][M], int B[M][N]) {
-    int i, j, s, k;
-    int a0, a1, a2, a3, a4, a5, a6, a7;
-    for (i = 0; i < N; i += 8) {
-    for (j = 0; j < M; j += 23) {
-        if (i + 8 <= N && j + 23 <= M) {
-            for (s = j; s < j + 23; s++) {
-                a0 = A[i][s];
-                a1 = A[i + 1][s];
-                a2 = A[i + 2][s];
-                a3 = A[i + 3][s];
-                a4 = A[i + 4][s];
-                a5 = A[i + 5][s];
-                a6 = A[i + 6][s];
-                a7 = A[i + 7][s];
-                B[s][i + 0] = a0;
-                B[s][i + 1] = a1;
-                B[s][i + 2] = a2;
-                B[s][i + 3] = a3;
-                B[s][i + 4] = a4;
-                B[s][i + 5] = a5;
-                B[s][i + 6] = a6;
-                B[s][i + 7] = a7;
-            }
-        } else {
-            for (k = i; k < min(i + 8, N); k++) {
-                for (s = j; s < min(j + 23, M); s++) {
-                    B[s][k] = A[k][s];
+    int i_c, j_c, i, j;
+    int b_size = 16;
+    for(i_c = 0;i < N;i_c += b_size) {
+        for(j_c = 0;j_c < M;j_c += b_size) {
+            for(i = i_c;i < i_c + b_size && i < N;++i) {
+                for(j = j_c;j < j_c + b_size && j < M;++j) {
+                    B[j][i] = A[i][j];
                 }
             }
         }
     }
-}
-
 }
 
 /* 
