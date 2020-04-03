@@ -165,6 +165,42 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS];  /* argument list execve() */
+    char buf[MAXLINE];   /* holds modified command line */
+    int bg;   /* background job? */
+    int state;
+    pid_t pid;
+    sigset_t mask_all, mask_one, prev_one;
+    strcpy(buf, cmdline);
+    bg = parseline(buf, argv);
+    if(argv[0] == NULL)   /* ignore empty line */
+        return;
+    if (!builtin_cmd(argv)) {   
+        sigfillset(&mask_all);
+        sigemptyset(&mask_one);
+        sigaddset(&mask_one, SIGCHLD);
+        sigprocmask(SIG_BLOCK, &mask_one, &prev_one);  /* block SIGCHLD */
+        if((pid = fork()) == 0) {   /* child process */
+            /* child inherit blocking vector, so unblock SIGCHLD for child
+             * to avoid failing to receive signal from its child */
+            sigprocmask(SIG_SETMASK, &prev_one, NULL);  
+            setpgid(0, 0);  /* change pgid to be same as child pid */
+            if(execve(argv[0], argv, environ) < 0) {
+                printf("%s: Command not found\n", argv[0]); 
+                exit(0);
+            }
+        } else {   /* parent proces */
+            sigprocmask(SIG_BLOCK, &mask_all, NULL);
+            state = bg ? BG : FG; 
+            addjob(jobs, pid, state, cmdline);
+            sigprocmask(SIG_SETMASK, &prev_one, NULL); /* unblock SIGCHLD for parent */
+            if (!bg) {  /* wait for foreground job */
+                waitfg(pid);
+            } else {   /* wait for background job */
+                printf("[%d] (%d) %s\n", pid2jid(pid), pid, cmdline); 
+            }
+        } 
+    }
     return;
 }
 
@@ -191,36 +227,36 @@ int parseline(const char *cmdline, char **argv)
     /* Build the argv list */
     argc = 0;
     if (*buf == '\'') {
-	buf++;
-	delim = strchr(buf, '\'');
+	    buf++;
+	    delim = strchr(buf, '\'');
     }
     else {
-	delim = strchr(buf, ' ');
+	    delim = strchr(buf, ' ');
     }
 
     while (delim) {
-	argv[argc++] = buf;
-	*delim = '\0';
-	buf = delim + 1;
-	while (*buf && (*buf == ' ')) /* ignore spaces */
-	       buf++;
+	    argv[argc++] = buf;
+	    *delim = '\0';
+	    buf = delim + 1;
+	    while (*buf && (*buf == ' ')) /* ignore spaces */
+	           buf++;
 
-	if (*buf == '\'') {
-	    buf++;
-	    delim = strchr(buf, '\'');
-	}
-	else {
-	    delim = strchr(buf, ' ');
-	}
+	    if (*buf == '\'') {
+	        buf++;
+	        delim = strchr(buf, '\'');
+	    }
+	    else {
+	        delim = strchr(buf, ' ');
+	    }
     }
     argv[argc] = NULL;
     
     if (argc == 0)  /* ignore blank line */
-	return 1;
+	    return 1;
 
     /* should the job run in the background? */
     if ((bg = (*argv[argc-1] == '&')) != 0) {
-	argv[--argc] = NULL;
+        argv[--argc] = NULL;
     }
     return bg;
 }
@@ -231,6 +267,18 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+    if(!strcmp(argv[0], "quit")) /* quit command */
+        exit(0);
+    if(!strcmp(argv[0], "&"))  /* ignore singleton & */
+        return 1;
+    if(!strcmp(argv[0], "fg") || !strcmp(argv[0], "bg")) {   /* bg or fg command */ 
+        do_bgfg(argv);
+        return 1;
+    }
+    if(!strcmp(argv[0], "jobs")) {   /* jobs command */
+        listjobs(jobs);
+        return 1;
+    }
     return 0;     /* not a builtin command */
 }
 
@@ -239,6 +287,7 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
+    
     return;
 }
 
@@ -504,6 +553,8 @@ void sigquit_handler(int sig)
     printf("Terminating after receipt of SIGQUIT signal\n");
     exit(1);
 }
+
+
 
 
 
