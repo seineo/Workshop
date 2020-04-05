@@ -197,7 +197,7 @@ void eval(char *cmdline)
             if (!bg) {  /* wait for foreground job */
                 waitfg(pid);
             } else {   /* wait for background job */
-                printf("[%d] (%d) %s\n", pid2jid(pid), pid, cmdline); 
+                printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline); 
             }
         } 
     }
@@ -303,7 +303,7 @@ void do_bgfg(char **argv)
         waitfg(job->pid);
     } else {     /* bg command */
         job->state = BG;
-        printf("[%d] (%d) %s\n", pid2jid(job->pid), job->pid, job->cmdline);
+        printf("[%d] (%d) %s", pid2jid(job->pid), job->pid, job->cmdline);
     }
     return;
 }
@@ -334,6 +334,38 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
+    int olderrno = errno;
+    int status;
+    sigset_t mask_all, prev_all;
+    pid_t pid;
+    sigfillset(&mask_all);
+    /* reap available zombie children, but dosen't wait for them to terminate */
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {  
+        if (WIFEXITED(status)) {   /* terminate normally */
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        }
+        else if (WIFSTOPPED(status)) {    /* stop by STGSTOP or SIGTSTP signal */
+            struct job_t *job = getjobpid(jobs, pid);
+            job->state = ST;
+            printf("Job [%d] (%d) stopped by signal %d\n", 
+                    job->jid, pid, WSTOPSIG(status)); 
+        }
+        else if (WIFSIGNALED(status)) {   /* terminate abnormally */
+            struct job_t *job = getjobpid(jobs, pid);
+            printf("Job [%d] (%d) terminated by signal %d\n", 
+                    job->jid, pid, WTERMSIG(status));
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        }
+    }
+    /* it seems that this lab doesn't need to deal with this error */
+    /*if (errno != ECHILD) {*/    
+        /*unix_error("waitpid error");*/
+    /*}*/
+    errno = olderrno;
     return;
 }
 
@@ -344,6 +376,12 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    int olderrno = errno;
+    int pid = fgpid(jobs);
+    /* use "-pid". Because we want stop the whole foreground process group. 
+       If the first argument < 0, it will send the signal to the process group*/
+    kill(-pid, sig);  
+    errno = olderrno;
     return;
 }
 
@@ -354,6 +392,10 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    int olderrno = errno;
+    int pid = fgpid(jobs);
+    kill(-pid, sig);
+    errno = olderrno;
     return;
 }
 
