@@ -297,7 +297,8 @@ void do_bgfg(char **argv)
         pid = atoi(argv[1]);
         job =getjobpid(jobs, pid);
     }
-    kill(job->pid, SIGCONT);  /* send signal SIGCONT to that job */ 
+    /* send signal SIGCONT to the whole foreground process group */ 
+    kill(-job->pid, SIGCONT);  
     if (!strcmp(argv[0], "fg")) {   /* fg command */
         job->state = FG;
         waitfg(job->pid);
