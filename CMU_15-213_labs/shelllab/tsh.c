@@ -173,7 +173,7 @@ void eval(char *cmdline)
     sigset_t mask_all, mask_one, prev_one;
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
-    if(argv[0] == NULL)   /* ignore empty line */
+    if (argv[0] == NULL)   /* ignore empty line */
         return;
     if (!builtin_cmd(argv)) {   
         sigfillset(&mask_all);
@@ -287,7 +287,24 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
-    
+    int jid;
+    pid_t pid;
+    struct job_t *job;
+    if (argv[1][0] == '%') {    /* use jid  */
+        jid = atoi(argv[1] + 1);
+        job = getjobjid(jobs, jid);
+    } else {      /* use pid */
+        pid = atoi(argv[1]);
+        job =getjobpid(jobs, pid);
+    }
+    kill(job->pid, SIGCONT);  /* send signal SIGCONT to that job */ 
+    if (!strcmp(argv[0], "fg")) {   /* fg command */
+        job->state = FG;
+        waitfg(job->pid);
+    } else {     /* bg command */
+        job->state = BG;
+        printf("[%d] (%d) %s\n", pid2jid(job->pid), job->pid, job->cmdline);
+    }
     return;
 }
 
@@ -296,6 +313,11 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    sigset_t mask;
+    sigemptyset(&mask);
+    while (fgpid(jobs) == pid) { /* while child process still running */
+        sigsuspend(&mask);   /* wait SIGCHLD */
+    }
     return;
 }
 
