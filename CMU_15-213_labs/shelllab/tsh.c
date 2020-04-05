@@ -290,12 +290,27 @@ void do_bgfg(char **argv)
     int jid;
     pid_t pid;
     struct job_t *job;
-    if (argv[1][0] == '%') {    /* use jid  */
+    if (argv[1] == NULL) {
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
+    else if (argv[1][0] == '%') {    /* use jid  */
         jid = atoi(argv[1] + 1);
-        job = getjobjid(jobs, jid);
-    } else {      /* use pid */
+        if ((job = getjobjid(jobs, jid)) == NULL) {
+            printf("%s: No such job\n", argv[1]); 
+            return;
+        }
+    } 
+    else if (argv[1][0] >= '0' && argv[1][0] <= '9'){   /* use pid */
         pid = atoi(argv[1]);
-        job =getjobpid(jobs, pid);
+        if ((job = getjobpid(jobs, pid)) == NULL) {
+            printf("(%s): No such process\n", argv[1]); 
+            return;
+        }
+    }
+    else {
+        printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+        return;
     }
     /* send signal SIGCONT to the whole foreground process group */ 
     kill(-job->pid, SIGCONT);  
