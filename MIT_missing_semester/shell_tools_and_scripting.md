@@ -6,7 +6,7 @@ To assign variables in bash use the syntax `foo=bar` and access the value of the
 
 Strings in bash can be defined with `'` and `"` delimiters but they are not equivalent. Strings delimited with `'` are literal strings and will not substitute variable values whereas `"` delimited strings will.
 
-```shell
+```sh
 seineo@dell:~/Desktop/CS$ foo=bar
 seineo@dell:~/Desktop/CS$ echo "$foo"
 bar
@@ -16,7 +16,7 @@ $foo
 
 As with most languages, shell has functions.
 
-```shell
+```sh
 vi mcd.sh
 #in mcd.sh
 mcd() {
@@ -44,7 +44,7 @@ mcd hello/world
 
 Commands will often return output using `STDOUT`, errors through `STDERR` and a **Return Code** to report errors in a more script friendly manner. 
 
-```shell
+```sh
 seineo@dell:~/Desktop$ echo "hello"
 hello
 seineo@dell:~/Desktop$ echo $?
@@ -58,7 +58,7 @@ These techniques are often referred to as shell *globbing* :
 - Wildcards - Whenever you want to perform some sort of wildcard matching you can use `?` and `*` to match one or any amount of characters respectively. For instance, given files `foo`, `foo1`, `foo2`, `foo10` and `bar`, the command `rm foo?` will delete `foo1` and `foo2` whereas `rm foo*` will delete all but `bar`.
 - Curly braces `{}` - Whenever you have a common substring in a series of commands you can  use curly braces for bash to expand this automatically. This comes in  very handy when moving or converting files.
 
-```shell
+```sh
 convert image.{png,jpg}
 # Will expand to
 convert image.png image.jpg
@@ -81,7 +81,7 @@ diff <(ls foo) <(ls bar)
 
 **shellcheck** can help us find out errors in bash scripts :
 
-```shell
+```sh
 seineo@dell:~/Desktop/test$ shellcheck mcd.sh 
 
 In mcd.sh line 1:
@@ -95,21 +95,21 @@ mcd() {
 
 1. man page (detailed but hard to decipher)
 
-   ```shell
+   ```sh
    man convert
    ```
 
 2. tldr (nifty and with examples)
 
-   ```shell
+   ```sh
    tdlr convert
    ```
 
 ### Finding files
-
+j
 Use `find`
 
-```shell
+```sh
 # Find all directories named src
 find . -name src -type d
 # Find all python files that have a folder named test in their path
@@ -122,7 +122,7 @@ find . -name '*.tmp' -exec rm {} \;
 
 Use `grep`
 
-```shell
+```sh
 #Search specific string in specific file
 grep "echo" mcd.sh
 #Search recursively in current directory 

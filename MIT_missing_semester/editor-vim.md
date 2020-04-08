@@ -15,14 +15,14 @@ Vim maintains a set of open files, called “buffers”. A Vim session has a num
 
 By default, Vim opens with a single tab, which contains a single window.
 
-```shell
+```sh
 :sp     #split window in to
 :vsp    #like :sp, but split vertically
 Ctrl + w + h/j/k/l   #Move the current window to be at the left/bottom/top/right  
 gt      #Go to the next tab page
 ```
 ### Command-line
-```shell
+```sh
 :e {name of file}  #open file for editing 
 :help {topic}      #open help
 :help :w    #opens help for the `:w` command
