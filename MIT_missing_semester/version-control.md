@@ -137,6 +137,8 @@ List some commonly used commands:
 - `git diff <filename>`: show differences since the last commit
 - `git diff <revision> <filename>`: shows differences in a file between snapshots
 - `git checkout <revision>`: updates HEAD and current branch
+- `git checkout <path>`: restores files in the path, for example, "git checkout ." restores
+    files under the current dir.
 - `git show`: show various types of objects, for example, for commits it shows
             textual diff.
 
