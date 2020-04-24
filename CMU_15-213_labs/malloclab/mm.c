@@ -72,6 +72,19 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp)-WSIZE)))
 #define PREV_BLKP(bp) ((char *)(bp)-GET_SIZE(((char *)(bp)-DSIZE)))
 
+/* for debug, comment the line below to disable debug code */
+/* #define DEBUG */
+
+#ifdef DEBUG
+#define DBG_PRINTF(...) fprintf(stderr, __VA_ARGS__)
+#define DBG_ASSERT(...) assert(__VA_ARGS__)
+#define CHECKHEAP(verbose) mm_checkheap(verbose)
+#else
+#define DBG_PRINTF(...)
+#define DBG_ASSERT(...)
+#define CHECKHEAP(verbose)
+#endif /* DEBUG */
+
 /********************
  * Global variables
  *******************/
@@ -159,6 +172,56 @@ static void *extend_heap(size_t words) {
     return coalesce(bp);
 }
 
+/*
+ * printblock - Print detailed information about block.
+ */
+static void printblock(void *bp) {
+    printf("payload address: %p\n", bp);
+    printf("block size: %u\n", GET_SIZE(HDRP(bp)));
+    printf("allocation: %d\n", GET_ALLOC(HDRP(bp)));
+}
+
+/*
+ * checkblock - Check at block level
+ */
+static void checkblock(void *bp) {
+    if (GET(HDRP(bp)) != GET(FTRP(bp)))
+        DBG_PRINTF("Header and footer don't match\n");
+    if ((size_t)bp % DSIZE)
+        DBG_PRINTF("Payload area isn't aligned\n");
+    if (GET_SIZE(HDRP(bp)) % DSIZE)
+        DBG_PRINTF("Block size is not valid\n");
+    if (!GET_ALLOC(HDRP(bp)) && !GET_ALLOC(HDRP(NEXT_BLKP(bp))))
+        DBG_PRINTF("Contiguous free blocks exist\n");
+}
+
+/*
+ * mm_checkheap - Check heap invariants to guarantee track of heap
+ */
+static void mm_checkheap(int verbose) {
+    char *bp;
+    if (verbose)
+        printf("Heap (%p):\n", heap_listp);
+    /* check prologue */
+    if (GET_SIZE(HDRP(heap_listp)) != DSIZE)
+        DBG_PRINTF("Prologue size is not correct\n");
+    if (!GET_ALLOC(HDRP(heap_listp)))
+        DBG_PRINTF("Prologue is not allocated\n");
+    /* check every block except epilogue */
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (verbose)
+            printblock(bp);
+        checkblock(bp);
+    }
+    /* check epilogue */
+    if (verbose)
+        printblock(bp);
+    if (GET_SIZE(HDRP(bp)) != 0)
+        DBG_PRINTF("Epilogue size is not correct\n");
+    if (!GET_ALLOC(HDRP(bp)))
+        DBG_PRINTF("Epilogue is not allocated\n");
+}
+
 /*****************
  * Main routines
  ****************/
@@ -178,6 +241,7 @@ int mm_init(void) {
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
+    CHECKHEAP(0);
     return 0;
 }
 
@@ -185,6 +249,7 @@ int mm_init(void) {
  * mm_malloc - Allocate a block whose size is a multiple of the alignment.
  */
 void *mm_malloc(size_t size) {
+    CHECKHEAP(0);
     size_t extend_size;
     char *bp;
     if (size == 0)
@@ -202,6 +267,7 @@ void *mm_malloc(size_t size) {
     if ((bp = (char *)extend_heap(extend_size / WSIZE)) == NULL)
         return NULL;
     place(bp, size);
+    CHECKHEAP(0);
     return bp;
 }
 
@@ -209,16 +275,19 @@ void *mm_malloc(size_t size) {
  * mm_free - Free an allocated block.
  */
 void mm_free(void *ptr) {
+    CHECKHEAP(0);
     size_t size = GET_SIZE(HDRP(ptr));
     PUT(HDRP(ptr), PACK(size, 0));
     PUT(FTRP(ptr), PACK(size, 0));
     coalesce(ptr); /* coalesce adjacent free blocks */
+    CHECKHEAP(0);
 }
 
 /*
  * mm_realloc - Changet the size of memory block
  */
 void *mm_realloc(void *ptr, size_t size) {
+    CHECKHEAP(0);
     if (ptr == NULL)
         return mm_malloc(size);
     if (size == 0) {
@@ -231,18 +300,20 @@ void *mm_realloc(void *ptr, size_t size) {
     size_t oldsize = GET_SIZE(HDRP(ptr));
     if (oldsize == blocksize) {
         return ptr;
-    } else if (oldsize > blocksize) {   /* the address is the same */
+    } else if (oldsize > blocksize) { /* the address is the same */
         PUT(HDRP(ptr), PACK(blocksize, 1));
         PUT(FTRP(ptr), PACK(blocksize, 1));
         PUT(HDRP(NEXT_BLKP(ptr)), PACK(oldsize - blocksize, 0));
         PUT(FTRP(NEXT_BLKP(ptr)), PACK(oldsize - blocksize, 0));
+        CHECKHEAP(0);
         return ptr;
-    } else {     /* malloc and get different address from the old block */
+    } else { /* malloc and get different address from the old block */
         newbp = (char *)mm_malloc(size);
         if (newbp == NULL)
             return NULL;
         memcpy(newbp, ptr, oldsize - DSIZE); /* copy payload not the block */
         mm_free(ptr);
+        CHECKHEAP(0);
         return newbp;
     }
 }
