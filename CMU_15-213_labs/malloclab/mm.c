@@ -112,17 +112,17 @@ static void *find_fit(size_t size) {
  * place - Place the blocks to be allocated.
  */
 static void place(void *bp, size_t size) {
-    size_t block_size = GET_SIZE(HDRP(bp));
-    size_t free_size = block_size - size;
+    size_t blocksize = GET_SIZE(HDRP(bp));
+    size_t freesize = blocksize - size;
     /* The minimum size of block is 2 * DSIZE */
-    if (free_size >= 2 * DSIZE) {
+    if (freesize >= 2 * DSIZE) {
         PUT(HDRP(bp), PACK(size, 1));
         PUT(FTRP(bp), PACK(size, 1));
-        PUT(HDRP(NEXT_BLKP(bp)), PACK(free_size, 0));
-        PUT(FTRP(NEXT_BLKP(bp)), PACK(free_size, 0));
+        PUT(HDRP(NEXT_BLKP(bp)), PACK(freesize, 0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(freesize, 0));
     } else {
-        PUT(HDRP(bp), PACK(block_size, 1));
-        PUT(FTRP(bp), PACK(block_size, 1));
+        PUT(HDRP(bp), PACK(blocksize, 1));
+        PUT(FTRP(bp), PACK(blocksize, 1));
     }
 }
 
@@ -176,9 +176,17 @@ static void *extend_heap(size_t words) {
  * printblock - Print detailed information about block.
  */
 static void printblock(void *bp) {
-    printf("payload address: %p\n", bp);
-    printf("block size: %u\n", GET_SIZE(HDRP(bp)));
-    printf("allocation: %d\n", GET_ALLOC(HDRP(bp)));
+    size_t hdsize, hdalloc, ftsize, ftalloc;
+    hdsize = GET_SIZE(HDRP(bp));
+    hdalloc = GET_ALLOC(HDRP(bp));
+    ftsize = GET_SIZE(FTRP(bp));
+    ftalloc = GET_ALLOC(FTRP(bp));
+    printf("%p: header: [%zu:%c] footer: [%zu:%c]\n",
+           bp,
+           hdsize,
+           hdalloc ? 'a' : 'f',
+           ftsize,
+           ftalloc ? 'a' : 'f');
 }
 
 /*
@@ -187,9 +195,9 @@ static void printblock(void *bp) {
 static void checkblock(void *bp) {
     if (GET(HDRP(bp)) != GET(FTRP(bp)))
         DBG_PRINTF("Header and footer don't match\n");
-    if ((size_t)bp % DSIZE)
+    if ((size_t)bp % ALIGNMENT)
         DBG_PRINTF("Payload area isn't aligned\n");
-    if (GET_SIZE(HDRP(bp)) % DSIZE)
+    if (GET_SIZE(HDRP(bp)) < 2 * DSIZE || GET_SIZE(HDRP(bp)) % ALIGNMENT)
         DBG_PRINTF("Block size is not valid\n");
     if (!GET_ALLOC(HDRP(bp)) && !GET_ALLOC(HDRP(NEXT_BLKP(bp))))
         DBG_PRINTF("Contiguous free blocks exist\n");
@@ -207,8 +215,8 @@ static void mm_checkheap(int verbose) {
         DBG_PRINTF("Prologue size is not correct\n");
     if (!GET_ALLOC(HDRP(heap_listp)))
         DBG_PRINTF("Prologue is not allocated\n");
-    /* check every block except epilogue */
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    /* check normal blocks */
+    for (bp = heap_listp + DSIZE; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (verbose)
             printblock(bp);
         checkblock(bp);
@@ -256,7 +264,8 @@ void *mm_malloc(size_t size) {
         return NULL;
     /* The minimum size of block is 2 * DSIZE (payload: DSIZE,
      * header and footer: DSIZE) and size should round up for alignment */
-    size = size <= DSIZE ? 2 * DSIZE : DSIZE * (((size + DSIZE) + DSIZE - 1) / DSIZE);
+    size = size <= DSIZE ? 2 * DSIZE
+                         : DSIZE * (((size + DSIZE) + DSIZE - 1) / DSIZE);
     /* find the free list for a fit */
     if ((bp = (char *)find_fit(size)) != NULL) {
         place(bp, size);
@@ -296,17 +305,22 @@ void *mm_realloc(void *ptr, size_t size) {
     }
     char *newbp;
     /* round up for alignment */
-    size_t blocksize = size <= DSIZE ? 2 * DSIZE : DSIZE * (((size + DSIZE) + DSIZE - 1) / DSIZE);
+    size_t blocksize = size <= DSIZE
+                           ? 2 * DSIZE
+                           : DSIZE * (((size + DSIZE) + DSIZE - 1) / DSIZE);
     size_t oldsize = GET_SIZE(HDRP(ptr));
-    if (oldsize == blocksize) {
-        return ptr;
-    } else if (oldsize > blocksize) { /* the address is the same */
-        PUT(HDRP(ptr), PACK(blocksize, 1));
-        PUT(FTRP(ptr), PACK(blocksize, 1));
-        PUT(HDRP(NEXT_BLKP(ptr)), PACK(oldsize - blocksize, 0));
-        PUT(FTRP(NEXT_BLKP(ptr)), PACK(oldsize - blocksize, 0));
-        CHECKHEAP(0);
-        return ptr;
+    if (oldsize >= blocksize) {  /* just modify its size in place */
+        int freesize = oldsize - blocksize;
+        /* the minimum size of free block is 2 * DSIZE */
+        if(freesize >= 2 * DSIZE) {
+            PUT(HDRP(ptr), PACK(blocksize, 1));
+            PUT(FTRP(ptr), PACK(blocksize, 1));
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(freesize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(freesize, 0));
+            return ptr;
+        } else {
+            return ptr;   
+        }
     } else { /* malloc and get different address from the old block */
         newbp = (char *)mm_malloc(size);
         if (newbp == NULL)
